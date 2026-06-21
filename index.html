@@ -11,10 +11,17 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: 'Tahoma', sans-serif; }
+        @media print {
+            body * { visibility: hidden; }
+            #printSection, #printSection * { visibility: visible; }
+            #printSection { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-center items-center p-4">
 
+    <!-- 🔐 بەشی چوونەژوورەوە -->
     <div id="loginSection" class="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <div class="text-center mb-6">
             <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/20 text-2xl flex items-center justify-center rounded-2xl mx-auto mb-4">🏢</div>
@@ -34,6 +41,7 @@
         </form>
     </div>
 
+    <!-- 🛠️ بەشی کارمەند -->
     <div id="staffSection" class="hidden w-full max-w-4xl flex flex-col h-full">
         <header class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex justify-between items-center px-6 mb-6">
             <div>
@@ -59,6 +67,7 @@
         </main>
     </div>
 
+    <!-- 🌐 بەشی ئەدمین و حیسابات -->
     <div id="adminSection" class="hidden w-full max-w-7xl flex flex-col h-full">
         <header class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex justify-between items-center px-6 mb-6">
             <div>
@@ -76,6 +85,7 @@
         </div>
 
         <main class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+            <!-- 📥 فۆڕمەکان -->
             <div class="xl:col-span-1 space-y-4">
                 <section class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
                     <h3 class="text-xs font-bold mb-3 text-white pb-2 border-b border-slate-800 text-blue-400">🏢 ١. زیادکردنی موڵکی نوێ</h3>
@@ -97,6 +107,7 @@
                     </form>
                 </section>
 
+                <!-- 🧾 وەسڵی پارەدانی گشتی -->
                 <section class="bg-slate-900 border border-slate-800 p-4 rounded-xl">
                     <h3 class="text-xs font-bold mb-3 text-white pb-2 border-b border-slate-800 text-amber-400">📝 ٣. وەسڵی پارەدان (مەسروفاتی گشتی)</h3>
                     <form id="voucherForm" class="space-y-3">
@@ -107,7 +118,9 @@
                 </section>
             </div>
             
+            <!-- 📋 خشتەکان -->
             <div class="xl:col-span-3 space-y-6">
+                <!-- خشتەی موڵکەکان -->
                 <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
                     <h3 class="text-sm font-bold text-white mb-4">📋 کۆنترۆڵی گشتی سەرجەم موڵکەکان</h3>
                     <div class="overflow-x-auto">
@@ -129,12 +142,14 @@
                     </div>
                 </div>
 
+                <!-- خشتەی وەسڵە بڕدراوەکان -->
                 <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
                     <h3 class="text-sm font-bold text-amber-400 mb-4">🖨️ لیستی وەسڵە بڕدراوەکان (مەسروفاتی گشتی)</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full text-right border-collapse text-xs">
                             <thead>
                                 <tr class="text-slate-400 border-b border-slate-800">
+                                    <th class="p-3">کۆدی وەسڵ</th>
                                     <th class="p-3">ڕێکەوت</th>
                                     <th class="p-3">بڕی پارە</th>
                                     <th class="p-3">مەبەست و هۆکار</th>
@@ -147,6 +162,43 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- 📄 مۆدۆڵی پیشاندانی وەسڵ بۆ پرینتکردن و سەیڤکردن وەک PDF -->
+    <div id="printModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
+        <div class="bg-white text-slate-900 w-full max-w-xl rounded-2xl p-6 shadow-2xl flex flex-col">
+            <!-- وەسڵەکە خۆی -->
+            <div id="printSection" class="bg-white p-6 border-4 border-slate-200 rounded-xl text-right">
+                <div class="flex justify-between items-center border-b-2 border-slate-900 pb-4 mb-4">
+                    <div>
+                        <h2 class="text-2xl font-black tracking-wide text-slate-900">PALM REAL ESTATE</h2>
+                        <p class="text-[10px] text-slate-500 mt-0.5">کۆمپانیا و بریکاری موڵکداری و وەبەرهێنان</p>
+                    </div>
+                    <div class="text-[18px] font-bold bg-slate-900 text-white px-4 py-1.5 rounded-lg">وەسڵی پارەدان</div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 text-xs mb-6 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <div><span class="text-slate-500">ژمارەی وەسڵ:</span> <span id="p_id" class="font-bold font-mono"></span></div>
+                    <div><span class="text-slate-500">ڕێکەوت:</span> <span id="p_date" class="font-bold"></span></div>
+                </div>
+
+                <div class="space-y-4 text-sm mb-8">
+                    <div class="border-b border-slate-200 pb-2 flex justify-between"><span class="text-slate-500 font-medium">بڕی پارە:</span> <span id="p_amount" class="font-black text-lg text-emerald-700"></span></div>
+                    <div class="border-b border-slate-200 pb-2"><span class="text-slate-500 font-medium">مەبەست و هۆکار:</span> <p id="p_reason" class="mt-1 font-bold text-slate-800 leading-relaxed"></p></div>
+                </div>
+
+                <div class="flex justify-between items-center pt-8 border-t border-dashed border-slate-300">
+                    <div class="text-center w-1/3"><p class="text-[11px] text-slate-400 mb-8">واژۆی وەرگر</p><div class="border-b border-slate-400 w-full mx-auto"></div></div>
+                    <div class="text-center w-1/3"><p class="text-[11px] text-slate-400 mb-8">واژۆی ژمێریار</p><div class="border-b border-slate-400 w-full mx-auto"></div></div>
+                </div>
+            </div>
+            
+            <!-- دوگمەکانی مۆدۆڵەکە -->
+            <div class="flex gap-3 mt-4 no-print">
+                <button onclick="window.print()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-3 rounded-xl transition-all shadow-md">پرینتکردن یان سەیڤ وەک PDF 🖨️</button>
+                <button onclick="closePrintModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-6 py-3 rounded-xl transition-all">داخستن ↩</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -221,7 +273,7 @@
             }
         }
 
-        // 📊 هێنانەوەی سەرجەم داتاکان و حیسابات بۆ ئەدمین و ژمێریار
+        // 📊 هێنانەوەی سەرجەم داتاکان بۆ ئەدمین و ژمێریار
         async function fetchAdminData() {
             const tbody = document.getElementById('adminTableBody');
             const select = document.getElementById('adminPropertySelect');
@@ -275,16 +327,19 @@
                     const dateStr = new Date(v.created_at).toLocaleDateString('ku-Arab');
                     const vTr = document.createElement('tr');
                     vTr.innerHTML = `
+                        <td class="p-3 font-mono text-amber-500 font-semibold">#VCH-${v.id}</td>
                         <td class="p-3 text-slate-400">${dateStr}</td>
-                        <td class="p-3 text-red-400 font-bold">$${Number(v.amount).toLocaleString()}</td>
-                        <td class="p-3 text-white">${v.reason}</td>
-                        <td class="p-3 text-center"><button onclick="deleteVoucher(${v.id})" class="text-red-500 hover:underline">🗑️ سڕینەوە</button></td>
+                        <td class="p-3 text-emerald-400 font-bold">$${Number(v.amount).toLocaleString()}</td>
+                        <td class="p-3 text-white font-medium">${v.reason}</td>
+                        <td class="p-3 text-center space-x-2">
+                            <button onclick="openPrintModal(${v.id}, '${dateStr}', ${v.amount}, '${v.reason}')" class="text-blue-400 hover:underline mx-1">🖨️ پیشاندان و چاپ</button>
+                            <button onclick="deleteVoucher(${v.id})" class="text-red-500 hover:underline mx-1">🗑️ سڕینەوە</button>
+                        </td>
                     `;
                     vTbody.appendChild(vTr);
                 });
             }
 
-            // کۆی گشتی مەسروفات = مەسروفاتی سەر موڵکەکان + مەسروفاتی گشتی نووسینگە
             const totalAllExpenses = propertyExpenses + generalExpenses;
 
             document.getElementById('totalSales').innerText = '$' + sales.toLocaleString();
@@ -337,7 +392,7 @@
             fetchAdminData();
         });
 
-        // 🧾 تۆمارکردنی وەسڵی مەسروفات بۆ ژمێریار
+        // 🧾 تۆمارکردنی وەسڵی مەسروفات و کردنەوەی ڕاستەوخۆ بۆ پرینت
         document.getElementById('voucherForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('voucherAmount').value);
@@ -348,10 +403,18 @@
             btn.innerText = "⏳ وەسڵ دەبڕدرێت...";
 
             try {
-                const { error } = await supabaseClient.from('vouchers').insert([{ amount: amount, reason: reason }]);
+                const { data, error } = await supabaseClient.from('vouchers').insert([{ amount: amount, reason: reason ]}).select();
                 if (error) throw error;
+                
                 document.getElementById('voucherForm').reset();
-                fetchAdminData();
+                await fetchAdminData();
+
+                // کردنەوەی مۆدۆڵی ڕاستەوخۆ بۆ پرینتکردنی وەسڵە نوێیەکە
+                if(data && data[0]) {
+                    const newVch = data[0];
+                    const dStr = new Date(newVch.created_at).toLocaleDateString('ku-Arab');
+                    openPrintModal(newVch.id, dStr, newVch.amount, newVch.reason);
+                }
             } catch (err) {
                 alert("کێشە لە وەسڵ: " + err.message);
             } finally {
@@ -359,6 +422,19 @@
                 btn.innerText = "بڕینی وەسڵ 🖨️";
             }
         });
+
+        // 🖨️ فەنکشنەکانی مۆدۆڵی وەسڵ و پرینت
+        function openPrintModal(id, date, amount, reason) {
+            document.getElementById('p_id').innerText = `VCH-${id}`;
+            document.getElementById('p_date').innerText = date;
+            document.getElementById('p_amount').innerText = `$${Number(amount).toLocaleString()}`;
+            document.getElementById('p_reason').innerText = reason;
+            document.getElementById('printModal').classList.remove('hidden');
+        }
+
+        function closePrintModal() {
+            document.getElementById('printModal').classList.add('hidden');
+        }
 
         async function deleteProperty(id) {
             if (confirm("⚠️ دڵنیایت لە سڕینەوەی ئەم موڵکە؟")) {
