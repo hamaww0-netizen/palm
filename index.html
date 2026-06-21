@@ -26,7 +26,7 @@
         <div class="text-center mb-6">
             <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/20 text-2xl flex items-center justify-center rounded-2xl mx-auto mb-4">🏢</div>
             <h2 class="text-xl font-bold text-white tracking-wide">PALM REAL ESTATE</h2>
-            <p class="text-xs text-slate-400 mt-2">تکایە زانیارییەکانt بنووسە بۆ چوونەژوورەوە</p>
+            <p class="text-xs text-slate-400 mt-2">تکایە زانیارییەکان بنووسە بۆ چوونەژوورەوە</p>
         </div>
         <form id="loginForm" class="space-y-4">
             <div>
@@ -227,31 +227,39 @@
             }
         }
 
-        // 🔐 لۆگین - چاککراوەتەوە و بە تەواوی کار دەکات
+        // 🔐 لۆگین - چارەسەری تەواو بۆ کێشەی پیت و بۆشاییەکان
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const usernameInput = document.getElementById('loginUsername').value.trim();
-            const passwordInput = document.getElementById('loginPassword').value;
+            const passwordInput = document.getElementById('loginPassword').value.trim();
             const loginBtn = document.getElementById('loginBtn');
 
             loginBtn.disabled = true;
             loginBtn.innerText = '⏳ چاوەڕوان بە...';
 
             try {
-                let { data: users, error } = await supabaseClient.from('employees').select('*').eq('ناو', usernameInput).eq('پاسۆرد', passwordInput);
+                // هێنانەوەی هەموو کارمەندەکان بۆ بەراوردکارییەکی دروست و نەهێشتنی کێشەی فۆنت
+                let { data: employees, error } = await supabaseClient.from('employees').select('*');
                 if (error) throw error;
 
-                if (users && users.length > 0) {
-                    localStorage.setItem('palm_user', users[0].ناو);
-                    localStorage.setItem('palm_role', users[0].ڕۆڵ);
-                    showDashboard(users[0].ناو, users[0].ڕۆڵ);
+                // دۆزینەوەی بەکارهێنەر لە ڕێگەی لایەنەکانەوە بێ گوێدانە جۆری پیتەکە
+                const matchedUser = employees.find(emp => {
+                    const dbName = String(emp.ناو).trim().toLowerCase();
+                    const dbPass = String(emp.پاسۆرد).trim();
+                    return dbName === usernameInput.toLowerCase() && dbPass === passwordInput;
+                });
+
+                if (matchedUser) {
+                    localStorage.setItem('palm_user', matchedUser.ناو);
+                    localStorage.setItem('palm_role', matchedUser.ڕۆڵ);
+                    showDashboard(matchedUser.ناو, matchedUser.ڕۆڵ);
                 } else {
                     alert("⚠️ ناوی بەکارهێنەر یان پاسۆردەکە هەڵەیە!");
                     loginBtn.disabled = false;
                     loginBtn.innerText = 'چوونەژوورەوە 🔒';
                 }
             } catch (err) {
-                alert("کێشە: " + err.message);
+                alert("کێشە لە پەیوەندی داتابەیس: " + err.message);
                 loginBtn.disabled = false;
                 loginBtn.innerText = 'چوونەژوورەوە 🔒';
             }
@@ -319,7 +327,6 @@
                 });
             }
 
-            // هێنانەوەی مەسروفاتی گشتی (وەسڵەکان)
             let generalExpenses = 0;
             const vTbody = document.getElementById('voucherTableBody');
             if(vTbody) vTbody.innerHTML = '';
