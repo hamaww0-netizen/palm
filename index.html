@@ -26,7 +26,7 @@
         <div class="text-center mb-6">
             <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/20 text-2xl flex items-center justify-center rounded-2xl mx-auto mb-4">🏢</div>
             <h2 class="text-xl font-bold text-white tracking-wide">PALM REAL ESTATE</h2>
-            <p class="text-xs text-slate-400 mt-2">تکایە زانیارییەکانت بنووسە بۆ چوونەژوورەوە</p>
+            <p class="text-xs text-slate-400 mt-2">تکایە زانیارییەکانt بنووسە بۆ چوونەژوورەوە</p>
         </div>
         <form id="loginForm" class="space-y-4">
             <div>
@@ -227,7 +227,7 @@
             }
         }
 
-        // 🔐 لۆگین
+        // 🔐 لۆگین - چاککراوەتەوە و بە تەواوی کار دەکات
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const usernameInput = document.getElementById('loginUsername').value.trim();
@@ -277,11 +277,11 @@
         async function fetchAdminData() {
             const tbody = document.getElementById('adminTableBody');
             const select = document.getElementById('adminPropertySelect');
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-slate-500">⏳ بار دەکرێت...</td></tr>';
+            if(tbody) tbody.innerHTML = '<tr><td colspan="8" class="text-center p-4 text-slate-500">⏳ بار دەکرێت...</td></tr>';
             
             let { data: properties } = await supabaseClient.from('properties').select('*').order('id', { ascending: false });
-            tbody.innerHTML = '';
-            select.innerHTML = '<option value="">موڵکێک هەڵبژێره...</option>';
+            if(tbody) tbody.innerHTML = '';
+            if(select) select.innerHTML = '<option value="">موڵکێک هەڵبژێره...</option>';
 
             let sales = 0, propertyExpenses = 0, comm = 0, costOfSold = 0;
 
@@ -289,10 +289,12 @@
                 properties.forEach(item => {
                     const displayCode = item.property_code || '—';
                     if (item.status !== 'sold') {
-                        const opt = document.createElement('option');
-                        opt.value = item.id; 
-                        opt.innerText = `[${displayCode}] ${item.title}`; 
-                        select.appendChild(opt);
+                        if(select) {
+                            const opt = document.createElement('option');
+                            opt.value = item.id; 
+                            opt.innerText = `[${displayCode}] ${item.title}`; 
+                            select.appendChild(opt);
+                        }
                     } else {
                         sales += Number(item.sale_price || 0);
                         comm += Number(item.commission || 0);
@@ -300,28 +302,30 @@
                         costOfSold += Number(item.cost_price || 0);
                     }
 
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="p-3 font-mono text-blue-400 font-semibold">${displayCode}</td>
-                        <td class="p-3 font-bold">${item.title || 'بێ ناو'}</td>
-                        <td class="p-3">$${Number(item.cost_price || 0).toLocaleString()}</td>
-                        <td class="p-3 text-emerald-400 font-semibold">${item.sale_price > 0 ? '$'+Number(item.sale_price).toLocaleString() : '—'}</td>
-                        <td class="p-3 text-blue-400">$${Number(item.commission || 0).toLocaleString()}</td>
-                        <td class="p-3 text-purple-400">$${Number(item.expenses || 0).toLocaleString()}</td>
-                        <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-lg text-xs ${item.status === 'sold' ? 'bg-red-950/60 text-red-400' : 'bg-green-950/60 text-green-400'}">${item.status === 'sold' ? 'فرۆشراو' : 'بەردەست'}</span></td>
-                        <td class="p-3 text-center"><button onclick="deleteProperty(${item.id})" class="text-red-400 hover:underline">🗑️ سڕینەوە</button></td>
-                    `;
-                    tbody.appendChild(tr);
+                    if(tbody) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="p-3 font-mono text-blue-400 font-semibold">${displayCode}</td>
+                            <td class="p-3 font-bold">${item.title || 'بێ ناو'}</td>
+                            <td class="p-3">$${Number(item.cost_price || 0).toLocaleString()}</td>
+                            <td class="p-3 text-emerald-400 font-semibold">${item.sale_price > 0 ? '$'+Number(item.sale_price).toLocaleString() : '—'}</td>
+                            <td class="p-3 text-blue-400">$${Number(item.commission || 0).toLocaleString()}</td>
+                            <td class="p-3 text-purple-400">$${Number(item.expenses || 0).toLocaleString()}</td>
+                            <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-lg text-xs ${item.status === 'sold' ? 'bg-red-950/60 text-red-400' : 'bg-green-950/60 text-green-400'}">${item.status === 'sold' ? 'فرۆشراو' : 'بەردەست'}</span></td>
+                            <td class="p-3 text-center"><button onclick="deleteProperty(${item.id})" class="text-red-400 hover:underline">🗑️ سڕینەوە</button></td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
                 });
             }
 
             // هێنانەوەی مەسروفاتی گشتی (وەسڵەکان)
             let generalExpenses = 0;
             const vTbody = document.getElementById('voucherTableBody');
-            vTbody.innerHTML = '';
+            if(vTbody) vTbody.innerHTML = '';
             
             let { data: vouchers } = await supabaseClient.from('vouchers').select('*').order('id', { ascending: false });
-            if(vouchers) {
+            if(vouchers && vTbody) {
                 vouchers.forEach(v => {
                     generalExpenses += Number(v.amount || 0);
                     const dateStr = new Date(v.created_at).toLocaleDateString('ku-Arab');
@@ -342,10 +346,10 @@
 
             const totalAllExpenses = propertyExpenses + generalExpenses;
 
-            document.getElementById('totalSales').innerText = '$' + sales.toLocaleString();
-            document.getElementById('totalExpenses').innerText = '$' + totalAllExpenses.toLocaleString();
-            document.getElementById('totalCommissions').innerText = '$' + comm.toLocaleString();
-            document.getElementById('netProfit').innerText = '$' + (sales - costOfSold - comm - totalAllExpenses).toLocaleString();
+            if(document.getElementById('totalSales')) document.getElementById('totalSales').innerText = '$' + sales.toLocaleString();
+            if(document.getElementById('totalExpenses')) document.getElementById('totalExpenses').innerText = '$' + totalAllExpenses.toLocaleString();
+            if(document.getElementById('totalCommissions')) document.getElementById('totalCommissions').innerText = '$' + comm.toLocaleString();
+            if(document.getElementById('netProfit')) document.getElementById('netProfit').innerText = '$' + (sales - costOfSold - comm - totalAllExpenses).toLocaleString();
         }
 
         // تۆمارکردنی موڵکی نوێ
@@ -392,7 +396,7 @@
             fetchAdminData();
         });
 
-        // 🧾 تۆمارکردنی وەسڵی مەسروفات و کردنەوەی ڕاستەوخۆ بۆ پرینت
+        // 🧾 تۆمارکردنی وەسڵی مەسروفات
         document.getElementById('voucherForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const amount = parseFloat(document.getElementById('voucherAmount').value);
@@ -409,7 +413,6 @@
                 document.getElementById('voucherForm').reset();
                 await fetchAdminData();
 
-                // کردنەوەی مۆدۆڵی ڕاستەوخۆ بۆ پرینتکردنی وەسڵە نوێیەکە
                 if(data && data[0]) {
                     const newVch = data[0];
                     const dStr = new Date(newVch.created_at).toLocaleDateString('ku-Arab');
@@ -423,7 +426,7 @@
             }
         });
 
-        // 🖨️ فەنکشنەکانی مۆدۆڵی وەسڵ و پرینت
+        // 🖨️ پیشاندانی مۆدۆڵ
         function openPrintModal(id, date, amount, reason) {
             document.getElementById('p_id').innerText = `VCH-${id}`;
             document.getElementById('p_date').innerText = date;
