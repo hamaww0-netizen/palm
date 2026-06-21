@@ -85,7 +85,7 @@
                     <form id="adminAddPropForm" class="space-y-3">
                         <input type="text" id="adminPropTitle" placeholder="ناوی موڵک" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none">
                         <input type="number" id="adminPropPrice" placeholder="نرخی کڕین ($)" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-xs text-white outline-none text-left" dir="ltr">
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-xs font-bold">پاشەکەوتکردنی موڵک 💾</button>
+                        <button type="submit" id="addPropBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-xs font-bold">پاشەکەوتکردنی موڵک 💾</button>
                     </form>
                 </section>
 
@@ -180,7 +180,7 @@
         async function fetchStaffProperties() {
             const tbody = document.getElementById('staffTableBody');
             tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-slate-500">⏳ لە داتابەیسەوە دەهێنرێت...</td></tr>';
-            let { data: properties } = await supabaseClient.from('properties').select('property_code, title, status').order('id', { ascending: false });
+            let { data: properties, error } = await supabaseClient.from('properties').select('property_code, title, status').order('id', { ascending: false });
             tbody.innerHTML = '';
             if(properties) {
                 properties.forEach(item => {
@@ -228,7 +228,7 @@
                         <td class="p-3">$${Number(item.cost_price || 0).toLocaleString()}</td>
                         <td class="p-3 text-emerald-400 font-semibold">${item.sale_price > 0 ? '$'+Number(item.sale_price).toLocaleString() : '—'}</td>
                         <td class="p-3 text-blue-400">$${Number(item.commission || 0).toLocaleString()}</td>
-                        <td class="p-3 text-purple-400">$${Number(item.commission || 0).toLocaleString()}</td>
+                        <td class="p-3 text-purple-400">$${Number(item.expenses || 0).toLocaleString()}</td>
                         <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-lg text-xs ${item.status === 'sold' ? 'bg-red-950/60 text-red-400' : 'bg-green-950/60 text-green-400'}">${item.status === 'sold' ? 'فرۆشراو' : 'بەردەست'}</span></td>
                         <td class="p-3 text-center"><button onclick="deleteProperty(${item.id})" class="text-red-400 hover:underline">🗑️ سڕینەوە</button></td>
                     `;
@@ -242,31 +242,45 @@
             document.getElementById('netProfit').innerText = '$' + (sales - costOfSold - comm - exp).toLocaleString();
         }
 
-        // تۆمارکردنی موڵکی نوێ لەگەڵ دروستکردنی ئۆتۆماتیکی کۆد لە ١٠٠ەوە
+        // تۆمارکردنی موڵکی نوێ لەگەڵ دڵنیابوونەوە لە دروستبوونی کۆد
         document.getElementById('adminAddPropForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const title = document.getElementById('adminPropTitle').value.trim();
             const price = parseFloat(document.getElementById('adminPropPrice').value);
+            const btn = document.getElementById('addPropBtn');
+
+            btn.disabled = true;
+            btn.innerText = "⏳ پاشەکەوت دەکرێت...";
 
             try {
-                // ١. هێنانەوەی بەرزترین کۆدی موڵک کە لە ئێستادا هەیە
-                let { data: lastProp, error } = await supabaseClient
+                // ١. هێنانەوەی هەموو موڵکەکان بۆ دڵنیابوونەوە لە بەرزترین ژمارەی کۆد
+                let { data: allProps, error } = await supabaseClient
                     .from('properties')
-                    .select('property_code')
-                    .order('property_code', { ascending: false })
-                    .limit(1);
+                    .select('property_code');
 
-                let nextCode = 100; // ئەگەر هیچ موڵکێک نەبوو لە 100ەوە دەستپێدەکات
+                let nextCode = 100;
 
-                if (lastProp && lastProp.length > 0 && lastProp[0].property_code) {
-                    const currentMax = parseInt(lastProp[0].property_code);
-                    if (!isNaN(currentMax)) {
-                        nextCode = currentMax + 1; // یەک ژمارە دەخاتە سەر بەرزترین کۆد
+                if (allProps && allProps.length > 0) {
+                    let maxCode = 99;
+                    allProps.forEach(p => {
+                        if (p.property_code) {
+                            const c = parseInt(p.property_code);
+                            if (!isNaN(c) && c > maxCode) {
+                                maxCode = c;
+                            }
+                        }
+                    });
+                    
+                    // ئەگەر هیچ کۆدێکی کۆن نەبوو بەڵام موڵک هەبوو، لە 100 + ژمارەی موڵکەکان دەستپێدەکات
+                    if (maxCode === 99) {
+                        nextCode = 100 + allProps.length;
+                    } else {
+                        nextCode = maxCode + 1;
                     }
                 }
 
                 // ٢. داخڵکردنی موڵکەکە بە کۆدە نوێیەکەوە
-                await supabaseClient.from('properties').insert([
+                const { error: insertError } = await supabaseClient.from('properties').insert([
                     { 
                         title: title, 
                         cost_price: price, 
@@ -275,10 +289,15 @@
                     }
                 ]);
 
+                if (insertError) throw insertError;
+
                 document.getElementById('adminAddPropForm').reset();
                 fetchAdminData();
             } catch (err) {
-                alert("کێشە لە دروستکردنی کۆدی موڵک: " + err.message);
+                alert("⚠️ کێشە ڕوویدا: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "پاشەکەوتکردنی موڵک 💾";
             }
         });
 
