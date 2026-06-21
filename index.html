@@ -15,7 +15,6 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-center items-center p-4">
 
-    <!-- 🔐 بەشی چوونەژوورەوە -->
     <div id="loginSection" class="bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md">
         <div class="text-center mb-6">
             <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/20 text-2xl flex items-center justify-center rounded-2xl mx-auto mb-4">🏢</div>
@@ -35,7 +34,6 @@
         </form>
     </div>
 
-    <!-- 🛠️ بەشی کارمەند -->
     <div id="staffSection" class="hidden w-full max-w-4xl flex flex-col h-full">
         <header class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex justify-between items-center px-6 mb-6">
             <div>
@@ -61,7 +59,6 @@
         </main>
     </div>
 
-    <!-- 🌐 بەشی ئەدمین و حیسابات -->
     <div id="adminSection" class="hidden w-full max-w-7xl flex flex-col h-full">
         <header class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex justify-between items-center px-6 mb-6">
             <div>
@@ -125,10 +122,35 @@
     </div>
 
     <script>
-        // 🔴 کلیلەکانی لۆکاڵی خۆت
         const SUPABASE_URL = "https://nmkoruhacuftnoniwglk.supabase.co";
         const SUPABASE_KEY = "sb_publishable_87xvU2VSgVnhhOQeqdmSMg_pgy9wxZ4";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 🔄 پشکنینی خۆکار لە کاتی ڕیفرێشکردندا
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('palm_user');
+            const savedRole = localStorage.getItem('palm_role');
+
+            if (savedUser && savedRole) {
+                showDashboard(savedUser, savedRole);
+            }
+        });
+
+        // فەنکشن بۆ پیشاندانی بەشەکان بەپێی ڕۆڵ
+        function showDashboard(username, role) {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.body.classList.remove('justify-center', 'items-center');
+            document.querySelectorAll('.activeUser').forEach(el => el.innerText = username);
+
+            const userRole = String(role).trim().toLowerCase();
+            if (userRole === 'admin' || userRole === 'accountant') {
+                document.getElementById('adminSection').classList.remove('hidden');
+                fetchAdminData();
+            } else if (userRole === 'staff') {
+                document.getElementById('staffSection').classList.remove('hidden');
+                fetchStaffProperties();
+            }
+        }
 
         // 🔐 پرۆسەی لۆگین
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -151,19 +173,12 @@
 
                 if (users && users.length > 0) {
                     const currentUser = users[0];
-                    const userRole = String(currentUser.ڕۆڵ).trim().toLowerCase();
+                    
+                    // پاشەکەوتکردن لە ناو لۆکاڵ ستۆریج بۆ ئەوەی بە ڕیفرێش نەڕوات
+                    localStorage.setItem('palm_user', currentUser.ناو);
+                    localStorage.setItem('palm_role', currentUser.ڕۆڵ);
 
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.body.classList.remove('justify-center', 'items-center');
-                    document.querySelectorAll('.activeUser').forEach(el => el.innerText = currentUser.ناو);
-
-                    if (userRole === 'admin' || userRole === 'accountant') {
-                        document.getElementById('adminSection').classList.remove('hidden');
-                        fetchAdminData();
-                    } else if (userRole === 'staff') {
-                        document.getElementById('staffSection').classList.remove('hidden');
-                        fetchStaffProperties();
-                    }
+                    showDashboard(currentUser.ناو, currentUser.ڕۆڵ);
                 } else {
                     alert("⚠️ ناوی بەکارهێنەر یان پاسۆردەکە هەڵەیە!");
                     loginBtn.disabled = false;
@@ -176,11 +191,11 @@
             }
         });
 
-        // 🛠️ بەشی کارمەند (تەنها خشتەی نیشاندان)
+        // 🛠️ بەشی کارمەند (خشتەی نیشاندان)
         async function fetchStaffProperties() {
             const tbody = document.getElementById('staffTableBody');
             tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-slate-500">⏳ لە داتابەیسەوە دەهێنرێت...</td></tr>';
-            let { data: properties, error } = await supabaseClient.from('properties').select('property_code, title, status').order('id', { ascending: false });
+            let { data: properties } = await supabaseClient.from('properties').select('property_code, title, status').order('id', { ascending: false });
             tbody.innerHTML = '';
             if(properties) {
                 properties.forEach(item => {
@@ -242,7 +257,7 @@
             document.getElementById('netProfit').innerText = '$' + (sales - costOfSold - comm - exp).toLocaleString();
         }
 
-        // تۆمارکردنی موڵکی نوێ لەگەڵ دڵنیابوونەوە لە دروستبوونی کۆد
+        // تۆمارکردنی موڵکی نوێ
         document.getElementById('adminAddPropForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const title = document.getElementById('adminPropTitle').value.trim();
@@ -253,11 +268,7 @@
             btn.innerText = "⏳ پاشەکەوت دەکرێت...";
 
             try {
-                // ١. هێنانەوەی هەموو موڵکەکان بۆ دڵنیابوونەوە لە بەرزترین ژمارەی کۆد
-                let { data: allProps, error } = await supabaseClient
-                    .from('properties')
-                    .select('property_code');
-
+                let { data: allProps } = await supabaseClient.from('properties').select('property_code');
                 let nextCode = 100;
 
                 if (allProps && allProps.length > 0) {
@@ -265,28 +276,14 @@
                     allProps.forEach(p => {
                         if (p.property_code) {
                             const c = parseInt(p.property_code);
-                            if (!isNaN(c) && c > maxCode) {
-                                maxCode = c;
-                            }
+                            if (!isNaN(c) && c > maxCode) maxCode = c;
                         }
                     });
-                    
-                    // ئەگەر هیچ کۆدێکی کۆن نەبوو بەڵام موڵک هەبوو، لە 100 + ژمارەی موڵکەکان دەستپێدەکات
-                    if (maxCode === 99) {
-                        nextCode = 100 + allProps.length;
-                    } else {
-                        nextCode = maxCode + 1;
-                    }
+                    nextCode = (maxCode === 99) ? (100 + allProps.length) : (maxCode + 1);
                 }
 
-                // ٢. داخڵکردنی موڵکەکە بە کۆدە نوێیەکەوە
                 const { error: insertError } = await supabaseClient.from('properties').insert([
-                    { 
-                        title: title, 
-                        cost_price: price, 
-                        status: 'available',
-                        property_code: nextCode
-                    }
+                    { title: title, cost_price: price, status: 'available', property_code: nextCode }
                 ]);
 
                 if (insertError) throw insertError;
@@ -301,7 +298,7 @@
             }
         });
 
-        // تۆمارکردنی فرۆشتن (تەنها ئەدمین)
+        // تۆمارکردنی فرۆشتن
         document.getElementById('adminFinanceForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('adminPropertySelect').value;
@@ -321,8 +318,10 @@
             }
         }
 
+        // ↩ چوونەدەرەوە و سڕینەوەی لۆکاڵ ستۆریج
         function logout() {
-            localStorage.clear();
+            localStorage.removeItem('palm_user');
+            localStorage.removeItem('palm_role');
             window.location.reload();
         }
     </script>
