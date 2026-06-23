@@ -273,22 +273,30 @@
 
             // هێنانەوەی مەسروفاتی گشتی (وەسڵەکان)
             let generalExpenses = 0;
-            const vTbody = document.getElementById('voucherTableBody');
-            vTbody.innerHTML = '';
-            
-            let { data: vouchers } = await supabaseClient.from('vouchers').select('*').order('id', { ascending: false });
-            if(vouchers) {
-                vouchers.forEach(v => {
-                    generalExpenses += Number(v.amount || 0);
-                    const dateStr = new Date(v.created_at).toLocaleDateString('ku-Arab');
-                    const vTr = document.createElement('tr');
-                    vTr.innerHTML = `
-                        <td class="p-3 text-slate-400">${dateStr}</td>
-                        <td class="p-3 text-red-400 font-bold">$${Number(v.amount).toLocaleString()}</td>
-                        <td class="p-3 text-white">${v.reason}</td>
-                        <td class="p-3 text-center"><button onclick="deleteVoucher(${v.id})" class="text-red-500 hover:underline">🗑️ سڕینەوە</button></td>
-                    `;
-                    vTbody.appendChild(vTr);
+            // لە ناو فەنکشنی fetchAdminData، ئەم بەشە لە جێگەی پێشووت دابنێ:
+let generalExpenses = 0;
+const vTbody = document.getElementById('voucherTableBody');
+vTbody.innerHTML = ''; // ئەمە لیستەکە پاک دەکاتەوە
+
+let { data: vouchers } = await supabaseClient.from('vouchers').select('*').order('id', { ascending: false });
+
+if(vouchers) {
+    vouchers.forEach(v => {
+        generalExpenses += Number(v.amount || 0);
+        const dateStr = new Date(v.created_at).toLocaleDateString('ku-Arab');
+        const vTr = document.createElement('tr');
+        
+        // ئەمەش ئەو کۆدە نوێیەیە کە دوگمەی چاپ و سڕینەوەی تێدایە
+        vTr.innerHTML = `
+            <td class="p-3 text-slate-400">${dateStr}</td>
+            <td class="p-3 text-red-400 font-bold">$${Number(v.amount).toLocaleString()}</td>
+            <td class="p-3 text-white">${v.reason}</td>
+            <td class="p-3 text-center">
+                <button onclick="printSpecificVoucher('${dateStr}', '${v.reason}', '${Number(v.amount).toLocaleString()}')" class="text-blue-400 hover:underline ml-3">🖨️ چاپ</button>
+                <button onclick="deleteVoucher(${v.id})" class="text-red-500 hover:underline">🗑️ سڕینەوە</button>
+            </td>
+        `;
+        vTbody.appendChild(vTr);
                 });
             }
 
@@ -392,6 +400,11 @@
         function logout() {
             localStorage.clear();
             window.location.reload();
+            function printSpecificVoucher(date, reason, amount) {
+    document.getElementById('v_date').innerText = date;
+    document.getElementById('v_reason').innerText = reason;
+    document.getElementById('v_amount').innerText = amount;
+    document.getElementById('printModal').classList.remove('hidden');
         }
     </script>
     <div id="printModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
