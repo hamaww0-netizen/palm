@@ -143,7 +143,6 @@
                     } else if (userRole === 'staff') {
                         document.getElementById('staffSection').classList.remove('hidden');
                         fetchStaffProperties();
-                        await fetchVouchers();
                     }
                 } else {
                     alert("⚠️ ناوی بەکارهێنەر یان پاسۆردەکە هەڵەیە!");
@@ -253,66 +252,5 @@
             window.location.reload();
         }
     </script>
-    </div> 
-
-    <section class="mt-6 w-full max-w-7xl mx-auto bg-slate-900 border border-slate-800 p-5 rounded-xl">
-        <h3 class="text-sm font-bold text-white mb-4">🧾 وەسڵی مەسروفات</h3>
-        <div class="overflow-x-auto">
-            <table class="w-full text-right border-collapse text-xs">
-                <thead><tr class="text-slate-400 border-b border-slate-800"><th class="p-3">ڕێکەوت</th><th class="p-3">بڕ</th><th class="p-3">مەبەست</th><th class="p-3 text-center">کردار</th></tr></thead>
-                <tbody id="voucherTableBody" class="divide-y divide-slate-800/50"></tbody>
-            </table>
-        </div>
-    </section>
-
-    <div id="printModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
-        <div id="voucherPrintArea" class="bg-white text-black w-full max-w-sm p-6 rounded-xl text-center">
-            <h2 class="text-xl font-bold border-b pb-2 mb-4">وەسڵی مەسروفات - PALM</h2>
-            <div class="text-right text-sm">
-                <p>ڕێکەوت: <span id="v_date"></span></p>
-                <p>مەبەست: <span id="v_reason"></span></p>
-                <p class="text-xl font-bold mt-4">بڕی: $<span id="v_amount"></span></p>
-            </div>
-            <div class="flex gap-2 mt-6 no-print">
-                <button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-2 rounded-xl">چاپ 🖨️</button>
-                <button onclick="document.getElementById('printModal').classList.add('hidden')" class="flex-1 bg-gray-400 text-white py-2 rounded-xl">داخستن</button>
-            </div>
-        </div>
-    </div>
-async function fetchVouchers() {
-    const tbody = document.getElementById('voucherTableBody');
-    let { data: vouchers } = await supabaseClient.from('vouchers').select('*').order('id', { ascending: false });
-    tbody.innerHTML = '';
-    if (vouchers) {
-        vouchers.forEach(v => {
-            const d = new Date(v.created_at).toLocaleDateString('ku-Arab');
-            tbody.innerHTML += `
-                <tr>
-                    <td class="p-3 text-slate-400">${d}</td>
-                    <td class="p-3 text-red-400 font-bold">$${Number(v.amount).toLocaleString()}</td>
-                    <td class="p-3">${v.reason}</td>
-                    <td class="p-3 text-center">
-                        <button onclick="printVoucher('${d}', '${v.reason}', '${v.amount}')" class="text-blue-400 hover:underline">🖨️</button>
-                        <button onclick="deleteVoucher(${v.id})" class="text-red-500 hover:underline mr-3">🗑️</button>
-                    </td>
-                </tr>`;
-        });
-    }
-}
-
-function printVoucher(d, r, a) {
-    document.getElementById('v_date').innerText = d;
-    document.getElementById('v_reason').innerText = r;
-    document.getElementById('v_amount').innerText = a;
-    document.getElementById('printModal').classList.remove('hidden');
-}
-
-async function deleteVoucher(id) {
-    if (confirm("⚠️ دڵنیایت لە سڕینەوەی ئەم وەسڵە؟")) {
-        await supabaseClient.from('vouchers').delete().eq('id', id);
-        fetchVouchers();
-    }
-}
-    <script>
 </body>
 </html>
