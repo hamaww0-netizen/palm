@@ -274,7 +274,7 @@
             // هێنانەوەی مەسروفاتی گشتی (وەسڵەکان)
             let generalExpenses = 0;
             // لە ناو فەنکشنی fetchAdminData، ئەم بەشە لە جێگەی پێشووت دابنێ:
-let generalExpenses = 0;
+    generalExpenses = 0;
 const vTbody = document.getElementById('voucherTableBody');
 vTbody.innerHTML = ''; // ئەمە لیستەکە پاک دەکاتەوە
 
@@ -400,6 +400,7 @@ if(vouchers) {
         function logout() {
             localStorage.clear();
             window.location.reload();
+            
             function printSpecificVoucher(date, reason, amount) {
     document.getElementById('v_date').innerText = date;
     document.getElementById('v_reason').innerText = reason;
