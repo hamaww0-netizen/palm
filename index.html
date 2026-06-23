@@ -12,6 +12,14 @@
     <style>
         body { font-family: 'Tahoma', sans-serif; }
     </style>
+    <style>
+    @media print {
+        body * { visibility: hidden; }
+        #voucherPrintArea, #voucherPrintArea * { visibility: visible; }
+        #voucherPrintArea { position: absolute; left: 0; top: 0; width: 100%; }
+        .no-print { display: none; }
+    }
+</style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-center items-center p-4">
 
@@ -338,27 +346,34 @@
         });
 
         // 🧾 تۆمارکردنی وەسڵی مەسروفات بۆ ژمێریار
-        document.getElementById('voucherForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const amount = parseFloat(document.getElementById('voucherAmount').value);
-            const reason = document.getElementById('voucherReason').value.trim();
-            const btn = document.getElementById('addVoucherBtn');
+       document.getElementById('voucherForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const amount = document.getElementById('voucherAmount').value;
+    const reason = document.getElementById('voucherReason').value;
+    const btn = document.getElementById('addVoucherBtn');
 
-            btn.disabled = true;
-            btn.innerText = "⏳ وەسڵ دەبڕدرێت...";
+    btn.disabled = true;
+    btn.innerText = "⏳ وەسڵ دەبڕدرێت...";
 
-            try {
-                const { error } = await supabaseClient.from('vouchers').insert([{ amount: amount, reason: reason }]);
-                if (error) throw error;
-                document.getElementById('voucherForm').reset();
-                fetchAdminData();
-            } catch (err) {
-                alert("کێشە لە وەسڵ: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "بڕینی وەسڵ 🖨️";
-            }
-        });
+    const { error } = await supabaseClient.from('vouchers').insert([{ amount: amount, reason: reason }]);
+
+    if (!error) {
+        // پڕکردنەوەی زانیارییەکان بۆ ناو وەسڵەکە
+        document.getElementById('v_date').innerText = new Date().toLocaleDateString('ku-Arab');
+        document.getElementById('v_reason').innerText = reason;
+        document.getElementById('v_amount').innerText = amount;
+        
+        // پیشاندانی پەنجەرەی چاپ
+        document.getElementById('printModal').classList.remove('hidden');
+        
+        document.getElementById('voucherForm').reset();
+        fetchAdminData();
+    } else {
+        alert("کێشە لە وەسڵ: " + error.message);
+    }
+    btn.disabled = false;
+    btn.innerText = "بڕینی وەسڵ 🖨️";
+});
 
         async function deleteProperty(id) {
             if (confirm("⚠️ دڵنیایت لە سڕینەوەی ئەم موڵکە؟")) {
@@ -379,5 +394,19 @@
             window.location.reload();
         }
     </script>
+    <div id="printModal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+    <div id="voucherPrintArea" class="bg-white text-black w-full max-w-sm p-6 rounded-xl shadow-2xl text-center">
+        <h2 class="text-xl font-bold border-b-2 border-black pb-2 mb-4">وەسڵی مەسروفات - PALM</h2>
+        <div class="text-right space-y-2 text-sm font-bold">
+            <p>ڕێکەوت: <span id="v_date"></span></p>
+            <p>مەبەست: <span id="v_reason"></span></p>
+            <p class="text-2xl mt-4 border-t border-black pt-2">بڕی: $<span id="v_amount"></span></p>
+        </div>
+        <div class="flex gap-2 mt-6 no-print">
+            <button onclick="window.print()" class="flex-1 bg-blue-600 text-white py-2 rounded-xl">چاپکردن 🖨️</button>
+            <button onclick="document.getElementById('printModal').classList.add('hidden')" class="flex-1 bg-gray-400 text-white py-2 rounded-xl">داخستن</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
