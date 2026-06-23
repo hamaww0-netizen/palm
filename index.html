@@ -271,13 +271,10 @@
                 });
             }
 
-            // هێنانەوەی مەسروفاتی گشتی (وەسڵەکان)
-            let generalExpenses = 0;
-            // لە ناو فەنکشنی fetchAdminData، ئەم بەشە لە جێگەی پێشووت دابنێ:
-    generalExpenses = 0;
-            
+         // هێنانەوەی وەسڵەکان
+let generalExpenses = 0;
 const vTbody = document.getElementById('voucherTableBody');
-vTbody.innerHTML = ''; // ئەمە لیستەکە پاک دەکاتەوە
+vTbody.innerHTML = ''; 
 
 let { data: vouchers } = await supabaseClient.from('vouchers').select('*').order('id', { ascending: false });
 
@@ -286,8 +283,6 @@ if(vouchers) {
         generalExpenses += Number(v.amount || 0);
         const dateStr = new Date(v.created_at).toLocaleDateString('ku-Arab');
         const vTr = document.createElement('tr');
-        
-        // ئەمەش ئەو کۆدە نوێیەیە کە دوگمەی چاپ و سڕینەوەی تێدایە
         vTr.innerHTML = `
             <td class="p-3 text-slate-400">${dateStr}</td>
             <td class="p-3 text-red-400 font-bold">$${Number(v.amount).toLocaleString()}</td>
@@ -297,7 +292,9 @@ if(vouchers) {
                 <button onclick="deleteVoucher(${v.id})" class="text-red-500 hover:underline">🗑️ سڕینەوە</button>
             </td>
         `;
-
+        vTbody.appendChild(vTr);
+    });
+}
             // کۆی گشتی مەسروفات = مەسروفاتی سەر موڵکەکان + مەسروفاتی گشتی نووسینگە
             const totalAllExpenses = propertyExpenses + generalExpenses;
 
