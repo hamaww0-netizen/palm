@@ -130,6 +130,7 @@
                 if (error) throw error;
 
                 if (users && users.length > 0) {
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     const currentUser = users[0];
                     const userRole = String(currentUser.ڕۆڵ).trim().toLowerCase();
 
@@ -251,6 +252,25 @@
             localStorage.clear();
             window.location.reload();
         }
+        window.addEventListener('load', () => {
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+        const currentUser = JSON.parse(savedUser);
+        const userRole = String(currentUser.ڕۆڵ || '').trim().toLowerCase();
+        
+        document.getElementById('loginSection').classList.add('hidden');
+        document.body.classList.remove('justify-center', 'items-center');
+        document.querySelectorAll('.activeUser').forEach(el => el.innerText = currentUser.ناو);
+
+        if (userRole === 'admin' || userRole === 'accountant') {
+            document.getElementById('adminSection').classList.remove('hidden');
+            fetchAdminData();
+        } else if (userRole === 'staff') {
+            document.getElementById('staffSection').classList.remove('hidden');
+            fetchStaffProperties();
+        }
+    }
+});
     </script>
 </body>
 </html>
