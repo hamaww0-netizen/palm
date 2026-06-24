@@ -109,6 +109,7 @@
         const SUPABASE_URL = "https://nmkoruhacuftnoniwglk.supabase.co";
         const SUPABASE_KEY = "sb_publishable_87xvU2VSgVnhhOQeqdmSMg_pgy9wxZ4";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let currentUser = null;
 
         // 🔐 پرۆسەی لۆگین
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
@@ -131,7 +132,8 @@
 
                 if (users && users.length > 0) {
                     localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                    const currentUser = users[0];
+                    currentUser = users[0];
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
                     const userRole = String(currentUser.ڕۆڵ).trim().toLowerCase();
 
                     document.getElementById('loginSection').classList.add('hidden');
@@ -252,6 +254,7 @@
             localStorage.clear();
             window.location.reload();
         }
+        
         window.addEventListener('load', () => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
